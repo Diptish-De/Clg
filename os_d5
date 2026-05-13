@@ -207,3 +207,9 @@ Consumer consumed item 72 from index 1
 ...
 Producer-Consumer execution completed.
 */
+
+
+
+**************QUESTION***********
+1. Write a program to simulate the producer- consumer problem using semaphores.
+2. Write a C program to simulate the concept of dinning-philosopher problem.
