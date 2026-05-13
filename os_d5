@@ -1,0 +1,209 @@
+//write a complete C code in OS for Write a program to simulate the producer- consumer problem using semaphores. 
+
+/*
+========================================================
+Producer-Consumer Problem using Semaphores in Linux OS
+========================================================
+
+Concepts Used:
+1. Semaphore
+2. Mutex Lock
+3. Thread Synchronization
+4. Critical Section
+
+Compilation Command:
+gcc producer_consumer.c -o pc -pthread
+
+Execution Command:
+./pc
+*/
+
+#include <stdio.h>      // Standard input/output functions
+#include <stdlib.h>     // Standard library functions
+#include <pthread.h>    // Thread library
+#include <semaphore.h>  // Semaphore library
+#include <unistd.h>     // Sleep function
+
+// Size of shared buffer
+#define BUFFER_SIZE 5
+
+// Shared buffer
+int buffer[BUFFER_SIZE];
+
+// Variables to track buffer positions
+int in = 0;
+int out = 0;
+
+// Semaphores
+sem_t empty;   // Counts empty slots
+sem_t full;    // Counts filled slots
+
+// Mutex lock for critical section
+pthread_mutex_t mutex;
+
+/*
+--------------------------------------------------------
+Producer Function
+--------------------------------------------------------
+*/
+void *producer(void *arg)
+{
+    int item;
+
+    // Produce 10 items
+    for (int i = 1; i <= 10; i++)
+    {
+        // Generate random item
+        item = rand() % 100;
+
+        // Wait if buffer is full
+        sem_wait(&empty);
+
+        // Enter critical section
+        pthread_mutex_lock(&mutex);
+
+        // Insert item into buffer
+        buffer[in] = item;
+
+        printf("Producer produced item %d at index %d\n",
+               item, in);
+
+        // Update buffer index
+        in = (in + 1) % BUFFER_SIZE;
+
+        // Exit critical section
+        pthread_mutex_unlock(&mutex);
+
+        // Increase full semaphore
+        sem_post(&full);
+
+        // Delay for visualization
+        sleep(1);
+    }
+
+    pthread_exit(NULL);
+}
+
+/*
+--------------------------------------------------------
+Consumer Function
+--------------------------------------------------------
+*/
+void *consumer(void *arg)
+{
+    int item;
+
+    // Consume 10 items
+    for (int i = 1; i <= 10; i++)
+    {
+        // Wait if buffer is empty
+        sem_wait(&full);
+
+        // Enter critical section
+        pthread_mutex_lock(&mutex);
+
+        // Remove item from buffer
+        item = buffer[out];
+
+        printf("Consumer consumed item %d from index %d\n",
+               item, out);
+
+        // Update buffer index
+        out = (out + 1) % BUFFER_SIZE;
+
+        // Exit critical section
+        pthread_mutex_unlock(&mutex);
+
+        // Increase empty semaphore
+        sem_post(&empty);
+
+        // Delay for visualization
+        sleep(2);
+    }
+
+    pthread_exit(NULL);
+}
+
+/*
+--------------------------------------------------------
+Main Function
+--------------------------------------------------------
+*/
+int main()
+{
+    // Thread variables
+    pthread_t producer_thread;
+    pthread_t consumer_thread;
+
+    // Initialize semaphore 'empty'
+    // Initially all slots are empty
+    sem_init(&empty, 0, BUFFER_SIZE);
+
+    // Initialize semaphore 'full'
+    // Initially buffer has 0 filled slots
+    sem_init(&full, 0, 0);
+
+    // Initialize mutex lock
+    pthread_mutex_init(&mutex, NULL);
+
+    // Create Producer Thread
+    pthread_create(&producer_thread,
+                   NULL,
+                   producer,
+                   NULL);
+
+    // Create Consumer Thread
+    pthread_create(&consumer_thread,
+                   NULL,
+                   consumer,
+                   NULL);
+
+    // Wait for Producer Thread to finish
+    pthread_join(producer_thread, NULL);
+
+    // Wait for Consumer Thread to finish
+    pthread_join(consumer_thread, NULL);
+
+    // Destroy semaphores
+    sem_destroy(&empty);
+    sem_destroy(&full);
+
+    // Destroy mutex
+    pthread_mutex_destroy(&mutex);
+
+    printf("\nProducer-Consumer execution completed.\n");
+
+    return 0;
+}
+/*
+Compilation Command (Linux)
+gcc producer_consumer.c -o pc -pthread
+Run Command
+./pc
+Alternative Compilation Command
+gcc producer_consumer.c -lpthread -o pc
+If Permission Denied Occurs
+chmod +x pc
+./pc
+Step-by-Step Terminal Execution
+nano producer_consumer.c
+
+Paste the code → Save using:
+
+CTRL + O
+ENTER
+CTRL + X
+
+Then compile and run:
+
+gcc producer_consumer.c -o pc -pthread
+./pc
+output:
+Producer produced item 45 at index 0
+Consumer consumed item 45 from index 0
+Producer produced item 72 at index 1
+Producer produced item 18 at index 2
+Consumer consumed item 72 from index 1
+...
+Producer-Consumer execution completed.
+*/
