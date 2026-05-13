@@ -210,6 +210,177 @@ Producer-Consumer execution completed.
 
 
 
-**************QUESTION***********
+
+
+
+*******************************************
+
+
+
+//Write a C program to simulate the concept of dinning-philosopher problem.
+
+/*
+========================================================
+Dining Philosopher Problem using Semaphores in C
+========================================================
+
+Concepts Used:
+1. Semaphore
+2. Mutex Lock
+3. Thread Synchronization
+4. Deadlock Avoidance
+
+Compilation:
+gcc dining_philosopher.c -o dp -pthread
+
+Execution:
+./dp
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <unistd.h>
+
+#define N 5   // Number of philosophers
+
+// Semaphore for forks
+sem_t forks[N];
+
+// Mutex for synchronization
+pthread_mutex_t mutex;
+
+// Philosopher function
+void *philosopher(void *num)
+{
+    int id = *(int *)num;
+
+    for (int i = 0; i < 3; i++)
+    {
+        // Philosopher is thinking
+        printf("Philosopher %d is THINKING\n", id);
+        sleep(1);
+
+        /*
+        Deadlock Avoidance Technique:
+        Odd philosopher picks left fork first,
+        Even philosopher picks right fork first.
+        */
+
+        if (id % 2 == 0)
+        {
+            // Pick right fork
+            sem_wait(&forks[(id + 1) % N]);
+            printf("Philosopher %d picked RIGHT fork %d\n",
+                   id, (id + 1) % N);
+
+            // Pick left fork
+            sem_wait(&forks[id]);
+            printf("Philosopher %d picked LEFT fork %d\n",
+                   id, id);
+        }
+        else
+        {
+            // Pick left fork
+            sem_wait(&forks[id]);
+            printf("Philosopher %d picked LEFT fork %d\n",
+                   id, id);
+
+            // Pick right fork
+            sem_wait(&forks[(id + 1) % N]);
+            printf("Philosopher %d picked RIGHT fork %d\n",
+                   id, (id + 1) % N);
+        }
+
+        // Eating section
+        printf("Philosopher %d is EATING\n", id);
+        sleep(2);
+
+        // Put down left fork
+        sem_post(&forks[id]);
+        printf("Philosopher %d released LEFT fork %d\n",
+               id, id);
+
+        // Put down right fork
+        sem_post(&forks[(id + 1) % N]);
+        printf("Philosopher %d released RIGHT fork %d\n",
+               id, (id + 1) % N);
+
+        printf("Philosopher %d finished EATING\n\n", id);
+    }
+
+    pthread_exit(NULL);
+}
+
+// Main function
+int main()
+{
+    pthread_t ph[N];
+    int phil_num[N];
+
+    // Initialize mutex
+    pthread_mutex_init(&mutex, NULL);
+
+    // Initialize semaphores for forks
+    for (int i = 0; i < N; i++)
+    {
+        sem_init(&forks[i], 0, 1);
+    }
+
+    // Create philosopher threads
+    for (int i = 0; i < N; i++)
+    {
+        phil_num[i] = i;
+
+        pthread_create(&ph[i],
+                       NULL,
+                       philosopher,
+                       &phil_num[i]);
+    }
+
+    // Wait for all philosophers
+    for (int i = 0; i < N; i++)
+    {
+        pthread_join(ph[i], NULL);
+    }
+
+    // Destroy semaphores
+    for (int i = 0; i < N; i++)
+    {
+        sem_destroy(&forks[i]);
+    }
+
+    // Destroy mutex
+    pthread_mutex_destroy(&mutex);
+
+    printf("\nDining Philosopher Problem Execution Completed.\n");
+
+    return 0;
+}
+
+/*Compilation Command
+gcc dining_philosopher.c -o dp -pthread
+Run Command
+./dp
+Sample Output
+Philosopher 0 is THINKING
+Philosopher 1 is THINKING
+Philosopher 2 is THINKING
+
+Philosopher 1 picked LEFT fork 1
+Philosopher 1 picked RIGHT fork 2
+Philosopher 1 is EATING
+
+Philosopher 1 released LEFT fork 1
+Philosopher 1 released RIGHT fork 2
+Philosopher 1 finished EATING
+*/
+
+
+
+
+
+**************QUESTION*********************
 1. Write a program to simulate the producer- consumer problem using semaphores.
 2. Write a C program to simulate the concept of dinning-philosopher problem.
